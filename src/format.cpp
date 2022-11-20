@@ -4,8 +4,21 @@
 
 using std::string;
 
-// TODO: Complete this helper function
 // INPUT: Long int measuring seconds
 // OUTPUT: HH:MM:SS
-// REMOVE: [[maybe_unused]] once you define the function
-string Format::ElapsedTime(long seconds[[maybe_unused]]) { return string(); }
+string Format::ElapsedTime(long seconds) 
+{ 
+    // Compute the date
+    int minute = (seconds/60)%60;
+    int hour = seconds/3600;
+    int lSeconds = seconds%60;
+
+    // Find the correct prefix
+    string preHour = (hour < 10) ? "0" : "";
+    string preMinute = (minute < 10) ? "0" : "";
+    string preSeconds = (lSeconds < 10) ? "0" : "";
+
+    return   preHour    + std::to_string(hour) + ":" 
+           + preMinute  + std::to_string(minute) + ":" 
+           + preSeconds + std::to_string(lSeconds); 
+}
