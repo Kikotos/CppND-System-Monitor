@@ -15,13 +15,15 @@ class Process {
   float CpuUtilization();                  // TODO: See src/process.cpp
   std::string Ram();                       // TODO: See src/process.cpp
   long int UpTime();                       // TODO: See src/process.cpp
-  bool operator<(Process const& a) const;  // TODO: See src/process.cpp
-  bool operator== (Process const &a) const;
+  bool operator<(Process const& a);  // TODO: See src/process.cpp
+  bool operator== (Process const &a);
 
   // TODO: Declare any necessary private members
  private:
  int pid{0};
  float cpuUtilization{0.0};
+ float prevTotal{0.0};
+ float prevActive{0.0};
 };
 
 #endif

@@ -24,19 +24,14 @@ std::vector<Process>& System::Processes()
 { 
     vector<int> pids = LinuxParser::Pids();
 
-    // Remove all the processes from the list
-    processes_.clear();
+    // Add new processes
+    AddNewProcesses(pids);
 
-    // Loop trough all the PIDs
-    for(int const &pid : pids)
-    {
-        if(pid > 12000)
-        {
-            Process newProcess(pid);
-            processes_.push_back(newProcess);
-        }
+    // Remove unused
+    RemoveUnusedProcesses(pids);
 
-    }
+    // Sort processes
+    std::sort(processes_.begin(), processes_.end());
 
     return processes_; 
 }
@@ -58,3 +53,52 @@ int System::TotalProcesses() { return LinuxParser::TotalProcesses(); }
 
 // Return the number of seconds since the system started running
 long int System::UpTime() { return LinuxParser::UpTime(); }
+
+
+
+void System::AddNewProcesses(vector<int> &pids)
+{
+    // Check every PID
+    for(int &pid: pids)
+    {
+        // Find the PID
+        std::vector<Process>::iterator findIter = std::find(processes_.begin(), processes_.end(), pid);
+
+        // If it's not found then push the new one
+        if(findIter == processes_.end())
+        {
+            Process newProcess(pid);
+            processes_.push_back(newProcess);
+        }
+    }
+}
+
+void System::RemoveUnusedProcesses(vector<int> &pids)
+{
+    vector<int> removePid;
+    // Check every PID
+    for(Process &proc: processes_)
+    {
+        // Find the PID
+        std::vector<int>::iterator findIter = std::find(pids.begin(), pids.end(), proc.Pid());
+
+        // If it's not found then push the new one
+        if(findIter == pids.end())
+        {
+            removePid.push_back(proc.Pid());
+        }
+    }
+
+    // Remove pids
+    for(int &pid: removePid)
+    {
+        // Find the PID
+        std::vector<Process>::iterator findIter = std::find(processes_.begin(), processes_.end(), pid);
+
+        // If it's not found then push the new one
+        if(findIter != processes_.end())
+        {
+            processes_.erase(findIter);
+        }
+    }
+}

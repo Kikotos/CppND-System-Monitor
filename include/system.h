@@ -20,6 +20,9 @@ class System {
 
   // TODO: Define any necessary private members
  private:
+  void AddNewProcesses(std::vector<int> &pids);
+  void RemoveUnusedProcesses(std::vector<int> &pids);
+
   Processor cpu_ = {};
   std::vector<Process> processes_ = {};
 };

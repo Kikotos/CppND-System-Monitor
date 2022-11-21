@@ -23,9 +23,16 @@ float Process::CpuUtilization()
     float activeTime = LinuxParser::ActiveTime(pid);
     float processUpTime = static_cast<float>(LinuxParser::UpTime(pid));
     float systemUpTime = static_cast<float>(LinuxParser::UpTime());
+    float total = systemUpTime-processUpTime;
 
-    cpuUtilization = ((activeTime > 0) && (processUpTime > 0) && (systemUpTime>0)) ? activeTime/(systemUpTime-processUpTime) : 0.0;
+    float dTotal = total - prevTotal;
+    float dActive = activeTime - prevActive;
+
+    prevActive = activeTime;
+    prevTotal = total;
     
+    cpuUtilization = (dTotal>0) ? dActive/(dTotal) : 0.0;
+
     return cpuUtilization; 
 }
 
@@ -61,17 +68,16 @@ string Process::User()
 }
 
 // Return the age of this process (in seconds)
-long int Process::UpTime() { return LinuxParser::UpTime(pid); }
+long int Process::UpTime() { return LinuxParser::UpTime() - LinuxParser::UpTime(pid); }
 
-// TODO: Overload the "less than" comparison operator for Process objects
-// REMOVE: [[maybe_unused]] once you define the function
-bool Process::operator<(Process const& a) const 
+// Overload the "less than" comparison operator for Process objects
+bool Process::operator<(Process const& a) 
 { 
-    return pid < a.pid; 
+    return this->cpuUtilization > a.cpuUtilization; 
 }
 
 
-bool Process::operator== (Process const &a) const
+bool Process::operator== (Process const &a)
 {
     return pid == a.pid;
 }
