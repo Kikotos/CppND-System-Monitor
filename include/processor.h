@@ -10,7 +10,7 @@ class Processor {
 
  
  private:
- std::vector<double> prevCpuTimes = std::vector<double>(kCPUStatesSize_, 0.0);
+ std::vector<double> prevCpuTimes = std::vector<double>(LinuxParser::CPUStates::kCPUStatesSize_, 0.0);
 };
 
 #endif

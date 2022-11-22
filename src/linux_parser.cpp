@@ -12,124 +12,159 @@ using std::stof;
 using std::string;
 using std::to_string;
 using std::vector;
+using std::pair;
+
+//*********************************** STATIC **************************
+// Parse file with keys
+static vector<string> 
+ParseFileKeys(const string &fileLocation, vector<char> &unusedSymbols, vector<pair<string, int>> &keysLine)
+{
+  string line;
+  string fileKey;
+  string fileValue;
+  vector<string> parsedValues;
+
+  std::ifstream filestream(fileLocation);
+  if (filestream.is_open()) 
+  {
+	// Check each line
+    while (std::getline(filestream, line)) 
+    {
+		// Remove symbols
+      for(const char &symbol: unusedSymbols)
+      {
+        std::replace(line.begin(), line.end(), symbol, ' ');
+      }
+      
+      std::istringstream linestream(line);
+
+		// Get the key
+      if (linestream >> fileKey) 
+      {
+		// Check if the key is in the list
+		for(auto key: keysLine)
+		{
+			if((key.first == fileKey) || (key.first.empty()))
+			{	
+				// If there is no key then push key as well
+				if(key.first.empty())
+				{
+					parsedValues.push_back(fileKey);
+				}
+
+				// Get value
+				while ((linestream >> fileValue) && (key.second-- > 0)) 
+				{
+					parsedValues.push_back(fileValue);
+				}
+				break;
+			}
+		}
+      }
+    }
+  }
+
+  return parsedValues;
+}
+
+// Parse file with position in file
+static vector<string> 
+ParseFilePosition(const string &fileLocation, const vector<char> &unusedSymbols, const vector<int> &positionInLine)
+{
+  string line;
+  string fileValue;
+  vector<string> parsedValues;
+
+  std::ifstream filestream(fileLocation);
+  if (filestream.is_open()) 
+  {
+	// Check each line
+    while (std::getline(filestream, line)) 
+    {
+		// Remove symbols
+      for(const char &symbol: unusedSymbols)
+      {
+        std::replace(line.begin(), line.end(), symbol, ' ');
+      }
+      
+      std::istringstream linestream(line);
+	  
+	  int position = 0;
+
+		// Get the key
+      while (linestream >> fileValue) 
+      {
+		// Check if the key is in the list
+		for(int pos: positionInLine)
+		{
+			if(position == pos)
+			{	
+				parsedValues.push_back(fileValue);
+			}
+		}
+
+		position++;
+      }
+    }
+  }
+
+  return parsedValues;
+}
+
 
 //*********************************** SYSTEM **************************
 // Read and return the system memory utilization
 float LinuxParser::MemoryUtilization() 
 { 
-  string line;
-  string key, value,units;
-  float memTotal, memFree = 0.0;
+	vector <char> excludeSymbols{':'};
+	vector <pair<string,int>> keys{{"MemTotal",1}, {"MemFree",1}};
 
-  std::ifstream filestream(kProcDirectory + kMeminfoFilename);
-  if (filestream.is_open()) 
-  {
-    while (std::getline(filestream, line)) 
-    {
-      std::replace(line.begin(), line.end(), ':', ' ');
-      std::istringstream linestream(line);
+	vector <string> parsedValue = ParseFileKeys(kProcDirectory + kMeminfoFilename, 
+												excludeSymbols, keys);
 
-      while (linestream >> key >> value >> units) 
-      {
-        if (key == "MemTotal") 
-        {
-          memTotal = stof(value);
-        }
-        if (key == "MemFree") 
-        {
-          memFree = stof(value);
-        }
-      }
-    }
-  }
+	float memTotal, memFree = 0.0;
 
-  return (1.0 - ((memTotal - memFree)/memTotal));
+	memTotal = stof(parsedValue[0]);
+	memFree = stof(parsedValue[1]);
+
+    return (1.0 - ((memTotal - memFree)/memTotal)); 
 }
 
 
 // Read and return the system uptime
 long LinuxParser::UpTime() 
 { 
-  string line;
-  string value, idleTime;
-  long upTime= 0;
+	vector <char> excludeSymbols;
+	vector <pair<string,int>> keys{{"",2}};
 
-  std::ifstream filestream(kProcDirectory + kUptimeFilename);
-  if (filestream.is_open()) 
-  {
-    while (std::getline(filestream, line)) 
-    {
-      std::istringstream linestream(line);
+	vector <string> parsedValue = ParseFileKeys(kProcDirectory + kUptimeFilename, 
+												excludeSymbols, keys);
 
-      while (linestream >> value >> idleTime) 
-      {
-         upTime = long(stof(value));
-      }
-    }
-  }
-
-  return upTime;
-  
+    return static_cast<long>((stof(parsedValue[0])));
 }
 
 // Read and return the total number of processes
 int LinuxParser::TotalProcesses() 
 { 
-  string line;
-  string key, value;
-  int procNum = 0;
+	vector <char> excludeSymbols;
+	vector <pair<string,int>> keys{{"processes",1}};
 
-  std::ifstream filestream(kProcDirectory + kStatFilename);
-  if (filestream.is_open()) 
-  {
-    while (std::getline(filestream, line)) 
-    {
-      std::istringstream linestream(line);
+	vector <string> parsedValue = ParseFileKeys(kProcDirectory + kStatFilename, 
+												excludeSymbols, keys);
 
-      while (linestream >> key) 
-      {
-        if (key == "processes") 
-        {
-          while (linestream >> value) 
-          {
-              procNum = stoi(value);
-          }
-        }
-      }
-    }
-  }
-
-  return procNum;
+    return stoi(parsedValue[0]);
 }
 
 // Read and return the number of running processes
 int LinuxParser::RunningProcesses() 
 { 
-  string line;
-  string key, value;
-  int procNum = 0;
+	vector <char> excludeSymbols;
+	vector <pair<string,int>> keys{{"procs_running",1}};
 
-  std::ifstream filestream(kProcDirectory + kStatFilename);
-  if (filestream.is_open()) 
-  {
-    while (std::getline(filestream, line)) 
-    {
-      std::istringstream linestream(line);
+	vector <string> parsedValue = ParseFileKeys(kProcDirectory + kStatFilename, 
+												excludeSymbols, keys);
 
-      if (linestream >> key) 
-      {
-        if (key == "procs_running") 
-        {
-          if (linestream >> value) 
-          {
-              procNum = stoi(value);
-          }
-        }
-      }
-    }
-  }
-
-  return procNum;
+    return stoi(parsedValue[0]);
 }
 
 // DONE: An example of how to read data from the filesystem
@@ -157,63 +192,52 @@ string LinuxParser::OperatingSystem() {
 
 // DONE: An example of how to read data from the filesystem
 string LinuxParser::Kernel() {
-  string os, kernel, version;
-  string line;
-  std::ifstream stream(kProcDirectory + kVersionFilename);
-  if (stream.is_open()) {
-    std::getline(stream, line);
-    std::istringstream linestream(line);
-    linestream >> os >> version >> kernel;
-  }
-  return kernel;
+   	vector <char> excludeSymbols;
+	vector <pair<string,int>> keys{{"",3}};
+
+	vector <string> parsedValue = ParseFileKeys(kProcDirectory + kVersionFilename, 
+												excludeSymbols, keys);
+
+  	return parsedValue[2];
 }
 
 
 
 //*********************************** CPU **************************
 
-// TODO: Read and return CPU utilization
+// Read and return CPU utilization
 vector<double> LinuxParser::CpuUtilization() 
 { 
-  vector<double> cpuTimes{0};
+  	vector<double> cpuTimes{0};
 
-  string line;
-  string key, value;
+	vector <char> excludeSymbols;
+	vector <pair<string,int>> keys{{"cpu",static_cast<int>(kCPUStatesSize_)}};
 
-  std::ifstream filestream(kProcDirectory + kStatFilename);
-  if (filestream.is_open()) 
-  {
-    while (std::getline(filestream, line)) 
-    {
-      std::istringstream linestream(line);
+	vector <string> parsedValue = ParseFileKeys(kProcDirectory + kStatFilename, 
+												excludeSymbols, keys);
 
-      if (linestream >> key) 
-      {
-        if (key == "cpu") 
-        {
-          while (linestream >> value) 
-          {
-              cpuTimes.push_back(stod(value));
-          }
-        }
-      }
-    }
-  }
+	for(const string &value: parsedValue)
+	{
+		cpuTimes.push_back(stod(value));
+	}
 
-  return cpuTimes; 
+    return cpuTimes; 
 }
 
-// TODO: Read and return the number of jiffies for the system
+// Read and return the number of jiffies for the system
 long LinuxParser::Jiffies() { return 0; }
 
-// TODO: Read and return the number of active jiffies for a PID
-// REMOVE: [[maybe_unused]] once you define the function
-long LinuxParser::ActiveJiffies(int pid[[maybe_unused]]) { return 0; }
+// Read and return the number of active jiffies for a PID
+long LinuxParser::ActiveJiffies(int pid) { 
+	
+	(void)pid;
+	return 0; 
+}
 
-// TODO: Read and return the number of active jiffies for the system
+// Read and return the number of active jiffies for the system
 long LinuxParser::ActiveJiffies() { return 0; }
 
-// TODO: Read and return the number of idle jiffies for the system
+// Read and return the number of idle jiffies for the system
 long LinuxParser::IdleJiffies() { return 0; }
 
 
@@ -257,61 +281,25 @@ string LinuxParser::Command(int pid)
 // Read and return the memory used by a process
 string LinuxParser::Ram(int pid) 
 { 
-  string line;
-  string key, memory;
+	vector <char> excludeSymbols{':'};
+	vector <pair<string,int>> keys{{"VmSize",1}};
 
-  std::ifstream filestream(kProcDirectory + to_string(pid) + kStatusFilename);
-  if (filestream.is_open()) 
-  {
-    while (std::getline(filestream, line)) 
-    {
-      std::replace(line.begin(), line.end(), ':', ' ');
-      std::istringstream linestream(line);
+	vector <string> parsedValue = ParseFileKeys(kProcDirectory + to_string(pid) + kStatusFilename, 
+												excludeSymbols, keys);
 
-      if (linestream >> key) 
-      {
-        if (key == "VmSize") 
-        {
-          if (linestream >> memory) 
-          {
-              break;
-          }
-        }
-      }
-    }
-  }
-
-  return memory;
+    return (!parsedValue.empty()) ? parsedValue.front() : std::string(); 
 }
 
 // Read and return the user ID associated with a process
 string LinuxParser::Uid(int pid) 
-{ 
-  string line;
-  string key, uid;
+{
+	vector <char> excludeSymbols{':'};
+	vector <pair<string,int>> keys{{"Uid",1}};
 
-  std::ifstream filestream(kProcDirectory + to_string(pid) + kStatusFilename);
-  if (filestream.is_open()) 
-  {
-    while (std::getline(filestream, line)) 
-    {
-      std::replace(line.begin(), line.end(), ':', ' ');
-      std::istringstream linestream(line);
+	vector <string> parsedValue = ParseFileKeys(kProcDirectory + to_string(pid) + kStatusFilename, 
+												excludeSymbols, keys);
 
-      if (linestream >> key) 
-      {
-        if (key == "Uid") 
-        {
-          if (linestream >> uid) 
-          {
-              break;
-          }
-        }
-      }
-    }
-  }
-
-  return uid; 
+    return (!parsedValue.empty()) ? parsedValue.front() : std::string(); 
 }
 
 // Read and return the user associated with a process
@@ -344,69 +332,35 @@ string LinuxParser::User(int iUid)
 // Read and return the uptime of a process
 long LinuxParser::UpTime(int pid) 
 { 
-  string line;
-  string value;
-  long long startTimeJiffies = 0;
+    vector <char> excludeSymbols;
+	vector <int> position{21};
+	long long timeJiffies = 0;
 
-  std::ifstream filestream(kProcDirectory + to_string(pid) + kStatFilename);
-  if (filestream.is_open()) 
-  {
-    if(std::getline(filestream, line)) 
-    {
-      std::istringstream linestream(line);
+	vector <string> parsedValue = ParseFilePosition(kProcDirectory + to_string(pid) + kStatFilename, 
+													excludeSymbols, position);
 
-      int valuePos = 1;
+	for(string &value: parsedValue)
+	{
+		timeJiffies += stoll(value);
+	}
 
-      while (linestream >> value) 
-      {
-        if (valuePos == 22) 
-        {
-            startTimeJiffies = stoll(value);
-            break;
-        }
-
-        valuePos++;
-      }
-    }
-  }
-
-  return static_cast<long>((startTimeJiffies > 0) ? startTimeJiffies/sysconf(_SC_CLK_TCK) : 0); 
+  	return (timeJiffies > 0) ? static_cast<float>(timeJiffies)/static_cast<float>(sysconf(_SC_CLK_TCK)) : 0.0; 
 }
 
 // Read and return the number of active time in seconds for a PID
 float LinuxParser::ActiveTime(int pid) 
 { 
-  
-  string line;
-  string value;
-  long long timeJiffies = 0;
+    vector <char> excludeSymbols;
+	vector <int> position{13,14,15,16};
+	long long timeJiffies = 0;
 
-  std::ifstream filestream(kProcDirectory + to_string(pid) + kStatFilename);
-  if (filestream.is_open()) 
-  {
-    if(std::getline(filestream, line)) 
-    {
-      std::istringstream linestream(line);
+	vector <string> parsedValue = ParseFilePosition(kProcDirectory + to_string(pid) + kStatFilename, 
+													excludeSymbols, position);
 
-      int valuePos = 1;
+	for(string &value: parsedValue)
+	{
+		timeJiffies += stoll(value);
+	}
 
-      while (linestream >> value) 
-      {
-        if ((valuePos >= 14) && (valuePos <= 17)) 
-        {
-            timeJiffies += stoll(value);
-
-            if(valuePos == 17)
-            {
-              break;
-            }
-        }
-
-        valuePos++;
-      }
-    }
-  }
-
-  return (timeJiffies > 0) ? static_cast<float>(timeJiffies)/static_cast<float>(sysconf(_SC_CLK_TCK)) : 0.0;
-  
+  	return (timeJiffies > 0) ? static_cast<float>(timeJiffies)/static_cast<float>(sysconf(_SC_CLK_TCK)) : 0.0; 
 }

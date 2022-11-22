@@ -17,7 +17,7 @@ Process::Process(int pid) : pid(pid){}
 // Return this process's ID
 int Process::Pid() const { return pid; }
 
-// TODO: Return this process's CPU utilizationprocesses
+// Return this process's CPU utilizationprocesses
 float Process::CpuUtilization() 
 { 
     float activeTime = LinuxParser::ActiveTime(pid);
@@ -53,7 +53,7 @@ string Process::Ram()
     return memoryMb; 
 }
 
-// TODO: Return the user (name) that generated this process
+// Return the user (name) that generated this process
 string Process::User() 
 { 
     string userName;

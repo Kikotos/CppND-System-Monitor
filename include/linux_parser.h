@@ -5,7 +5,10 @@
 #include <regex>
 #include <string>
 
-// CPU
+
+namespace LinuxParser {
+
+  // CPU
 enum CPUStates {
   kUser_ = 0,
   kNice_,
@@ -20,8 +23,6 @@ enum CPUStates {
   kCPUStatesSize_
 };
 
-
-namespace LinuxParser {
 // Paths
 const std::string kProcDirectory{"/proc/"};
 const std::string kCmdlineFilename{"/cmdline"};
