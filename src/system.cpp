@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <bits/stdc++.h>
 
 #include "process.h"
 #include "processor.h"
@@ -32,6 +33,7 @@ std::vector<Process>& System::Processes()
 
     // Sort processes
     std::sort(processes_.begin(), processes_.end());
+    std::reverse(processes_.begin(), processes_.end());
 
     return processes_; 
 }
@@ -61,11 +63,8 @@ void System::AddNewProcesses(vector<int> &pids)
     // Check every PID
     for(int &pid: pids)
     {
-        // Find the PID
-        std::vector<Process>::iterator findIter = std::find(processes_.begin(), processes_.end(), pid);
-
         // If it's not found then push the new one
-        if(findIter == processes_.end())
+        if(FindPid(pid) < 0)
         {
             Process newProcess(pid);
             processes_.push_back(newProcess);
@@ -92,13 +91,31 @@ void System::RemoveUnusedProcesses(vector<int> &pids)
     // Remove pids
     for(int &pid: removePid)
     {
-        // Find the PID
-        std::vector<Process>::iterator findIter = std::find(processes_.begin(), processes_.end(), pid);
+
+        int index = FindPid(pid);
 
         // If it's not found then push the new one
-        if(findIter != processes_.end())
+        if(index >= 0)
         {
-            processes_.erase(findIter);
+            processes_.erase(processes_.begin() + index);
         }
     }
+}
+
+int System::FindPid(int pid)
+{
+    int it = -1;
+    bool found = false;
+
+    for(Process &process: processes_)
+    {
+        if(process.Pid() == pid)
+        {
+            found = true;
+            break;
+        }
+        it++;
+    }
+
+    return (found) ? it: -1;
 }

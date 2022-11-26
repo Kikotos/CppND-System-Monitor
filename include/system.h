@@ -21,6 +21,7 @@ class System {
  private:
   void AddNewProcesses(std::vector<int> &pids);
   void RemoveUnusedProcesses(std::vector<int> &pids);
+  int FindPid(int pid);
 
   Processor cpu_ = {};
   std::vector<Process> processes_ = {};

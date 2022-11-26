@@ -24,14 +24,8 @@ float Process::CpuUtilization()
     float processUpTime = static_cast<float>(LinuxParser::UpTime(pid));
     float systemUpTime = static_cast<float>(LinuxParser::UpTime());
     float total = systemUpTime-processUpTime;
-
-    float dTotal = total - prevTotal;
-    float dActive = activeTime - prevActive;
-
-    prevActive = activeTime;
-    prevTotal = total;
     
-    cpuUtilization = (dTotal>0) ? dActive/(dTotal) : 0.0;
+    cpuUtilization = (total>0) ? activeTime/total : 0.0;
 
     return cpuUtilization; 
 }
@@ -73,11 +67,5 @@ long int Process::UpTime() { return LinuxParser::UpTime() - LinuxParser::UpTime(
 // Overload the "less than" comparison operator for Process objects
 bool Process::operator<(Process const& a) 
 { 
-    return this->cpuUtilization > a.cpuUtilization; 
-}
-
-
-bool Process::operator== (Process const &a)
-{
-    return pid == a.pid;
+    return cpuUtilization < a.cpuUtilization; 
 }
